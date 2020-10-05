@@ -343,6 +343,10 @@ public class StringUtils {
                 // not allowing L with an exponent
                 return foundDigit && !hasExp;
             }
+
+            if (ch == '.') {
+                return true;
+            }
             // last character is illegal
             return false;
         }
@@ -385,5 +389,19 @@ public class StringUtils {
         chars[17] = (char) (second/10 + '0');
         chars[18] = (char) (second%10 + '0');
         return new String(chars);
+    }
+
+    public static String removeNameQuotes(String s) {
+        if (s == null || s.length() <= 1) {
+            return null;
+        }
+        int len = s.length();
+        char c0 = s.charAt(0);
+        char last = s.charAt(len - 1);
+
+        if (c0 == last && (c0 == '`' || c0 == '\'' || c0 == '\"') ) {
+            return s.substring(1, len - 1);
+        }
+        return s;
     }
 }

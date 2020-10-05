@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.alibaba.druid.DbType;
 import com.alibaba.druid.filter.FilterAdapter;
 import com.alibaba.druid.filter.FilterChain;
 import com.alibaba.druid.proxy.jdbc.CallableStatementProxy;
@@ -75,7 +76,7 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
 
     private WallProvider       provider;
 
-    private String             dbType;
+    private String dbTypeName;
 
     private WallConfig         config;
 
@@ -112,46 +113,47 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
     @Override
     public synchronized void init(DataSourceProxy dataSource) {
 
-        if (null == dataSource) {
+        if (dataSource == null) {
             LOG.error("dataSource should not be null");
             return;
         }
 
-        if (this.dbType == null || this.dbType.trim().length() == 0) {
+        if (this.dbTypeName == null || this.dbTypeName.trim().length() == 0) {
             if (dataSource.getDbType() != null) {
-                this.dbType = dataSource.getDbType();
+                this.dbTypeName = dataSource.getDbType();
             } else {
-                this.dbType = JdbcUtils.getDbType(dataSource.getRawJdbcUrl(), "");
+                this.dbTypeName = JdbcUtils.getDbType(dataSource.getRawJdbcUrl(), "");
             }
         }
 
-        if (dbType == null) {
-            dbType = JdbcUtils.getDbType(dataSource.getUrl(), null);
+        if (dbTypeName == null) {
+            dbTypeName = JdbcUtils.getDbType(dataSource.getUrl(), null);
         }
 
-        if (JdbcUtils.MYSQL.equals(dbType) || //
-            JdbcUtils.MARIADB.equals(dbType) || //
-            JdbcUtils.H2.equals(dbType)||
+        DbType dbType = DbType.of(this.dbTypeName);
+
+        if (JdbcUtils.isMysqlDbType(dbType) || //
             JdbcUtils.PRESTO.equals(dbType)) {
             if (config == null) {
                 config = new WallConfig(MySqlWallProvider.DEFAULT_CONFIG_DIR);
             }
 
             provider = new MySqlWallProvider(config);
-        } else if (JdbcUtils.ORACLE.equals(dbType) || JdbcUtils.ALI_ORACLE.equals(dbType)) {
+        } else if (JdbcUtils.isOracleDbType(dbType)) {
             if (config == null) {
                 config = new WallConfig(OracleWallProvider.DEFAULT_CONFIG_DIR);
             }
 
             provider = new OracleWallProvider(config);
-        } else if (JdbcUtils.SQL_SERVER.equals(dbType) || JdbcUtils.JTDS.equals(dbType)) {
+        } else if (JdbcUtils.isSqlserverDbType(dbType)) {
             if (config == null) {
                 config = new WallConfig(SQLServerWallProvider.DEFAULT_CONFIG_DIR);
             }
 
             provider = new SQLServerWallProvider(config);
-        } else if (JdbcUtils.POSTGRESQL.equals(dbType)
-                || JdbcUtils.ENTERPRISEDB.equals(dbType)) {
+        } else if (JdbcUtils.isPgsqlDbType(dbType)
+                || DbType.edb == dbType
+                || DbType.polardb == dbType) {
             if (config == null) {
                 config = new WallConfig(PGWallProvider.DEFAULT_CONFIG_DIR);
             }
@@ -173,11 +175,19 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
     }
 
     public String getDbType() {
-        return dbType;
+        return dbTypeName;
     }
 
     public void setDbType(String dbType) {
-        this.dbType = dbType;
+        this.dbTypeName = dbType;
+    }
+
+    public void setDbType(DbType dbType) {
+        if (dbType == null) {
+            this.dbTypeName = null;
+        } else {
+            this.dbTypeName = dbType.name();
+        }
     }
 
     public boolean isLogViolation() {
@@ -989,6 +999,11 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
     @Override
     public Object resultSet_getObject(FilterChain chain, ResultSetProxy resultSet, int columnIndex) throws SQLException {
         return chain.resultSet_getObject(resultSet, resultSet.getPhysicalColumn(columnIndex));
+    }
+
+    @Override
+    public <T> T resultSet_getObject(FilterChain chain, ResultSetProxy resultSet, int columnIndex, Class<T> type) throws SQLException {
+        return chain.resultSet_getObject(resultSet, resultSet.getPhysicalColumn(columnIndex), type);
     }
 
     @Override

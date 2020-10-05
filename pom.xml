@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.alibaba</groupId>
 	<artifactId>druid</artifactId>
-	<version>1.1.17_preview_6</version>
+	<version>1.2.0</version>
 
 	<packaging>jar</packaging>
 	<name>druid</name>
-	<description>An JDBC datasource implementation.</description>
+	<description>A JDBC datasource implementation.</description>
 	<url>https://github.com/alibaba/druid</url>
 	<inceptionYear>2013</inceptionYear>
 
@@ -26,7 +26,7 @@
 	<repositories>
 		<repository>
 			<id>local-file</id>
-			<url>file://${basedir}/lib/</url>
+			<url>file://${project.basedir}/lib/</url>
 			<layout>default</layout>
 		</repository>
 	</repositories>
@@ -160,39 +160,6 @@
 				</executions>
 			</plugin>
 
-			<!-- http://code.google.com/p/maven-license-plugin/wiki/HowTo -->
-			<plugin>
-				<!-- Working with multi-module projects -->
-				<inherited>false</inherited>
-				<groupId>com.mycila.maven-license-plugin</groupId>
-				<artifactId>maven-license-plugin</artifactId>
-				<version>1.10.b1</version>
-				<configuration>
-					<header>${basedir}/doc/license.txt</header>
-					<failIfMissing>true</failIfMissing>
-					<aggregate>true</aggregate>
-					<strictCheck>true</strictCheck>
-					<properties>
-						<!-- <year>2012</year> -->
-					</properties>
-					<mapping>
-						<java>SLASHSTAR_STYLE</java>
-					</mapping>
-					<includes>
-						<include>src/main/java/**/*.java</include>
-					</includes>
-					<encoding>UTF-8</encoding>
-				</configuration>
-				<executions>
-					<execution>
-						<id>check-headers</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -234,9 +201,9 @@
 
 	<profiles>
 		<profile>
-			<id>default-profile</id>
+			<id>jconsole</id>
 			<activation>
-				<activeByDefault>true</activeByDefault>
+				<!--<activeByDefault>true</activeByDefault>-->
 				<file>
 					<exists>${env.JAVA_HOME}/lib/jconsole.jar</exists>
 				</file>
@@ -262,6 +229,19 @@
 					<scope>system</scope>
 					<systemPath>${toolsjar}</systemPath>
 					<optional>true</optional>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>java11plus</id>
+			<activation>
+				<jdk>[11,)</jdk>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>javax.annotation</groupId>
+					<artifactId>javax.annotation-api</artifactId>
+					<version>1.3.2</version>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -463,7 +443,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.15</version>
+			<version>8.0.17</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -475,7 +455,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.1.4</version>
+			<version>42.2.12</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -512,7 +492,7 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>1.4.191</version>
+			<version>1.4.199</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -544,13 +524,13 @@
 		<dependency>
 			<groupId>org.apache.calcite</groupId>
 			<artifactId>calcite-core</artifactId>
-			<version>1.14.0</version>
+			<version>1.18.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>22.0</version>
+			<version>29.0-jre</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -559,7 +539,20 @@
 			<version>2.5.3</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-recipes</artifactId>
+			<version>4.2.0</version>
+			<scope>provided</scope>
+		</dependency>
 
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.73</version>
+			<scope>provided</scope>
+			<optional>true</optional>
+		</dependency>
 
 		<!--
 			test dependences
@@ -617,18 +610,6 @@
 			<version>0.8.0.RELEASE</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>proxool</groupId>
-			<artifactId>proxool</artifactId>
-			<version>0.9.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>proxool</groupId>
-			<artifactId>proxool-cglib</artifactId>
-			<version>0.9.1</version>
-			<scope>test</scope>
-		</dependency>
 
 		<dependency>
 			<groupId>c3p0</groupId>
@@ -649,19 +630,6 @@
 			<artifactId>nutz</artifactId>
 			<version>1.r.55</version>
 			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.taobao.tbdatasource</groupId>
-			<artifactId>tbdatasource</artifactId>
-			<version>2.0.2</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>jboss</groupId>
-					<artifactId>jboss-j2ee</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -707,7 +675,7 @@
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.36</version>
+			<version>1.2.68</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -736,5 +704,33 @@
 			<scope>test</scope>
 		</dependency>
 
+        <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>tools</artifactId>
+            <version>1.8</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/openjdk-1.8-tools.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>jconsole</artifactId>
+            <version>1.8</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/openjdk-1.8-jconsole.jar</systemPath>
+        </dependency>
+
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-test</artifactId>
+			<version>4.2.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.68</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 </project>
